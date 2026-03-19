@@ -82,7 +82,7 @@ class PreviousOutpointLookupMode(str, Enum):
          response_model_exclude_unset=True)
 @sql_db_only
 async def get_transaction(response: Response,
-                          transactionId: str = Path(regex="[a-f0-9]{64}"),
+                          transactionId: str = Path(pattern="[a-f0-9]{64}"),
                           inputs: bool = True,
                           outputs: bool = True,
                           resolve_previous_outpoints: PreviousOutpointLookupMode =

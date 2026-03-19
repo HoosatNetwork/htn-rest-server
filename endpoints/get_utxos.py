@@ -32,7 +32,7 @@ class UtxoResponse(BaseModel):
 @app.get("/addresses/{hoosatAddress}/utxos", response_model=List[UtxoResponse], tags=["Hoosat addresses"])
 async def get_utxos_for_address(hoosatAddress: str = Path(
     description="Htn address as string e.g. hoosat:qqkqkzjvr7zwxxmjxjkmxxdwju9kjs6e9u82uh59z07vgaks6gg62v8707g73",
-    regex="^hoosat\:[a-z0-9]{61,64}$")):
+    pattern="^hoosat\:[a-z0-9]{61,64}$")):
     """
     Lists all open utxo for a given kaspa address
     """

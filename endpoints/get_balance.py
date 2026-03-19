@@ -37,7 +37,7 @@ def csv_generator(balances):
 async def get_balance_from_hoosat_address(
         hoosatAddress: str = Path(
             description="Hoosat address as string e.g. hoosat:pzhh76qc82wzduvsrd9xh4zde9qhp0xc8rl7qu2mvl2e42uvdqt75zrcgpm00",
-            regex="^hoosat\:[a-z0-9]{61,63}$")):
+            pattern="^hoosat\:[a-z0-9]{61,63}$")):
     """
     Get balance for a given hoosat address
     """
