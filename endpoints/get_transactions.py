@@ -19,6 +19,21 @@ DESC_RESOLVE_PARAM = "Use this parameter if you want to fetch the TransactionInp
                      "adds it into each TxInput."
 
 
+def _unique_by_index(rows, prefer_key=None):
+    """Keep one row per (transaction_id, index). Prefer the row that has data."""
+    best = {}
+    for r in rows:
+        key = (r.transaction_id, r.index)
+        if key not in best:
+            best[key] = r
+            continue
+        if prefer_key is not None:
+            current = getattr(best[key], prefer_key, None)
+            new = getattr(r, prefer_key, None)
+            if (current is None or current == "") and (new is not None and new != ""):
+                best[key] = r
+    return list(best.values())
+
 class TxOutput(BaseModel):
     id: int
     transaction_id: str
@@ -43,7 +58,7 @@ class TxInput(BaseModel):
     previous_outpoint_address: str | None = None
     previous_outpoint_amount: int | None = None
     signature_script: str
-    sig_op_count: int
+    sig_op_count: int | None = None
 
     class Config:
         from_attributes = True
@@ -106,6 +121,7 @@ async def get_transaction(response: Response,
                                          .filter(TransactionOutput.transaction_id == transactionId))
 
             tx_outputs = tx_outputs.scalars().all()
+            tx_outputs = _unique_by_index(tx_outputs, prefer_key="script_public_key")
 
         if inputs:
             if resolve_previous_outpoints in ["light", "full"]:
@@ -134,11 +150,12 @@ async def get_transaction(response: Response,
 
                 # remove unneeded list
                 tx_inputs = [x[0] for x in tx_inputs]
-
+                tx_inputs = _unique_by_index(tx_inputs, prefer_key="sig_op_count")
             else:
                 tx_inputs = await s.execute(select(TransactionInput) \
                                             .filter(TransactionInput.transaction_id == transactionId))
                 tx_inputs = tx_inputs.scalars().all()
+                tx_inputs = _unique_by_index(tx_inputs, prefer_key="sig_op_count")
 
     if tx:
         return {
@@ -222,7 +239,7 @@ async def search_for_transactions(txSearch: TxSearch,
 
             # remove unneeded list
             tx_inputs = [x[0] for x in tx_inputs]
-
+            tx_inputs = _unique_by_index(tx_inputs, prefer_key="sig_op_count")
         else:
             tx_inputs = None
 
@@ -230,6 +247,7 @@ async def search_for_transactions(txSearch: TxSearch,
             tx_outputs = await s.execute(select(TransactionOutput) \
                                          .filter(TransactionOutput.transaction_id.in_(txSearch.transactionIds)))
             tx_outputs = tx_outputs.scalars().all()
+            tx_outputs = _unique_by_index(tx_outputs, prefer_key="script_public_key")
         else:
             tx_outputs = None
 
