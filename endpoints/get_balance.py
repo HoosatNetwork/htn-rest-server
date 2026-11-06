@@ -190,7 +190,7 @@ async def get_balances_csv_paged_with_yesterday(page: int = Query(1, ge=1),
 
 _SUMMARY_SQL = text("""
     with r as (
-        select balance, row_number() over (order by balance desc) - 1 as idx
+        select balance, row_number() over (order by balance desc) as idx
         from balances_yesterday
     )
     select
